@@ -5,6 +5,10 @@ namespace App\Http\Controllers;
 use App\Models\District;
 use App\Models\Business;
 use App\Models\ManufacturingGap;
+use App\Models\Product;
+use App\Models\MarketDemand;
+use App\Services\GapCalculationService;
+use App\Services\OpportunityScoringService;
 use Illuminate\Http\Request;
 use Barryvdh\DomPDF\Facade\Pdf;
 
@@ -56,5 +60,51 @@ class DashboardController extends Controller
 
         $pdf = Pdf::loadView('pdf.opportunity_brief', compact('gap', 'candidateBusinesses'));
         return $pdf->download("Opportunity_Brief_{$gap->product->name}.pdf");
+    }
+
+    public function createDemand()
+    {
+        $districts = District::orderBy('name')->get();
+        $products = Product::orderBy('name')->get();
+
+        return view('create_demand', compact('districts', 'products'));
+    }
+
+    public function storeDemand(Request $request, GapCalculationService $gapService, OpportunityScoringService $scoreService)
+    {
+        $validated = $request->validate([
+            'district_id' => 'required|uuid|exists:districts,id',
+            'product_id' => 'required|uuid|exists:products,id',
+            'quantity' => 'required|numeric|min:1',
+            'period' => 'required|string',
+            'source' => 'nullable|string|max:255',
+        ]);
+
+        // Market demand record ya update karein
+        MarketDemand::updateOrCreate(
+            [
+                'district_id' => $validated['district_id'],
+                'product_id' => $validated['product_id'],
+                'period' => $validated['period'],
+            ],
+            [
+                'quantity' => $validated['quantity'],
+                'source' => $validated['source'] ?? 'Direct Platform Ingestion',
+                'verification_status' => 'verified',
+            ]
+        );
+
+        // Instant automatic gap identification & scoring computation
+        $gap = $gapService->calculateForProductAndDistrict(
+            $validated['district_id'],
+            $validated['product_id'],
+            $validated['period']
+        );
+
+        if ($gap) {
+            $scoreService->computeScore($gap);
+        }
+
+        return redirect()->route('dashboard')->with('success', 'Market Demand successfully recorded and Opportunity Score recomputed!');
     }
 }
