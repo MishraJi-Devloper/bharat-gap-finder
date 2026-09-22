@@ -11,3 +11,4 @@ Route::get('/opportunity/{id}/pdf', [DashboardController::class, 'exportPdf'])->
 // Dynamic Data Ingestion Pipeline
 Route::get('/demand/create', [DashboardController::class, 'createDemand'])->name('demand.create');
 Route::post('/demand/store', [DashboardController::class, 'storeDemand'])->name('demand.store');
+Route::get('/compare', [DashboardController::class, 'compare'])->name('compare');

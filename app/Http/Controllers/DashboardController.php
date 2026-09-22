@@ -11,32 +11,50 @@ use App\Services\GapCalculationService;
 use App\Services\OpportunityScoringService;
 use Illuminate\Http\Request;
 use Barryvdh\DomPDF\Facade\Pdf;
+use Illuminate\Support\Facades\Cache;
 
 class DashboardController extends Controller
 {
     public function index()
     {
-        $totalDistricts = District::count();
-        $totalBusinesses = Business::count();
-        $totalGaps = ManufacturingGap::where('status', 'published')->count();
-        $gaps = ManufacturingGap::with(['district', 'product'])->orderBy('opportunity_score', 'desc')->get();
+        // 10 minutes cache: Bar-bar remote database (Supabase) ping delay 0 ho jayega
+        $dashboardData = Cache::remember('bmgf_dashboard_payload', 600, function () {
+            // 1. Fetch gaps with relations in 1 single query
+            $gaps = ManufacturingGap::with(['district', 'product'])
+                ->orderBy('opportunity_score', 'desc')
+                ->get();
 
-        // Map markers ke liye districts aur unke active gaps ka payload
-        $mapDistricts = District::with(['businesses'])->get()->map(function ($district) {
+            // 2. Single trip query with counts (eliminates N+1 loop roundtrips)
+            $districts = District::withCount(['businesses', 'manufacturingGaps'])->get();
+
+            // 3. In-memory calculations (0 extra DB queries)
+            $totalDistricts = $districts->count();
+            $totalBusinesses = Business::count();
+            $totalGaps = $gaps->where('status', 'published')->count();
+
+            // 4. Map markers payload formatting
+            $mapDistricts = $districts->map(function ($district) {
+                return [
+                    'name' => $district->name,
+                    'state' => $district->state,
+                    'lat' => (float) $district->latitude,
+                    'lng' => (float) $district->longitude,
+                    'businesses_count' => $district->businesses_count,
+                    'gaps_count' => $district->manufacturing_gaps_count,
+                ];
+            });
+
             return [
-                'name' => $district->name,
-                'state' => $district->state,
-                'lat' => (float) $district->latitude,
-                'lng' => (float) $district->longitude,
-                'businesses_count' => $district->businesses->count(),
-                'gaps_count' => ManufacturingGap::where('district_id', $district->id)->count(),
+                'totalDistricts' => $totalDistricts,
+                'totalBusinesses' => $totalBusinesses,
+                'totalGaps' => $totalGaps,
+                'gaps' => $gaps,
+                'mapDistricts' => $mapDistricts,
+                'mapDistrictsJson' => json_encode($mapDistricts),
             ];
         });
 
-        // Pre-encoded JSON string taaki Blade script me bina decorator error ke load ho
-        $mapDistrictsJson = json_encode($mapDistricts);
-
-        return view('dashboard', compact('totalDistricts', 'totalBusinesses', 'totalGaps', 'gaps', 'mapDistricts', 'mapDistrictsJson'));
+        return view('dashboard', $dashboardData);
     }
 
     public function show(string $id)
@@ -105,6 +123,22 @@ class DashboardController extends Controller
             $scoreService->computeScore($gap);
         }
 
+        // Cache clear taaki naya record turant dashboard par show ho
+        Cache::forget('bmgf_dashboard_payload');
+
         return redirect()->route('dashboard')->with('success', 'Market Demand successfully recorded and Opportunity Score recomputed!');
+    }
+
+    public function compare(Request $request)
+    {
+        $districts = District::orderBy('name')->get();
+
+        $districtA_id = $request->query('district_a', $districts->first()?->id);
+        $districtB_id = $request->query('district_b', $districts->skip(1)->first()?->id);
+
+        $districtA = District::with(['businesses', 'manufacturingGaps.product'])->find($districtA_id);
+        $districtB = District::with(['businesses', 'manufacturingGaps.product'])->find($districtB_id);
+
+        return view('compare', compact('districts', 'districtA', 'districtB'));
     }
 }

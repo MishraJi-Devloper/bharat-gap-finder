@@ -45,11 +45,21 @@
     </style>
 </head>
 <body>
-    <nav class="navbar navbar-dark px-4 py-3">
-        <a class="navbar-brand fw-bold" href="{{ route('dashboard') }}">
-            <span class="text-success">BHARAT</span> MANUFACTURING GAP FINDER
-        </a>
-        <span class="text-secondary small">District Economic Intelligence Platform</span>
+    <nav class="navbar navbar-dark px-4 py-3 d-flex justify-content-between align-items-center">
+        <div class="d-flex align-items-center gap-3">
+            <a class="navbar-brand fw-bold mb-0" href="{{ route('dashboard') }}">
+                <span class="text-success">BHARAT</span> MANUFACTURING GAP FINDER
+            </a>
+            <span class="text-secondary small d-none d-md-inline border-start ps-3 border-secondary">District Economic Intelligence Platform</span>
+        </div>
+        <div class="d-flex align-items-center gap-2">
+            <a href="{{ route('compare') }}" class="btn btn-sm btn-outline-light fw-semibold">
+                Compare Districts
+            </a>
+            <a href="{{ route('demand.create') }}" class="btn btn-sm btn-success fw-bold">
+                + Ingest Demand
+            </a>
+        </div>
     </nav>
 
     <div class="container-fluid py-4 px-4">
