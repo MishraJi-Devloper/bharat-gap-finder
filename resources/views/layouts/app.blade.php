@@ -56,6 +56,9 @@
             <a href="{{ route('compare') }}" class="btn btn-sm btn-outline-light fw-semibold">
                 Compare Districts
             </a>
+            <a href="{{ route('supply.create') }}" class="btn btn-sm btn-outline-info fw-semibold">
+                + Log Supply
+            </a>
             <a href="{{ route('demand.create') }}" class="btn btn-sm btn-success fw-bold">
                 + Ingest Demand
             </a>

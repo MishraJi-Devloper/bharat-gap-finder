@@ -7,6 +7,7 @@ use App\Models\Business;
 use App\Models\ManufacturingGap;
 use App\Models\Product;
 use App\Models\MarketDemand;
+use App\Models\LocalProduction;
 use App\Services\GapCalculationService;
 use App\Services\OpportunityScoringService;
 use Illuminate\Http\Request;
@@ -127,6 +128,56 @@ class DashboardController extends Controller
         Cache::forget('bmgf_dashboard_payload');
 
         return redirect()->route('dashboard')->with('success', 'Market Demand successfully recorded and Opportunity Score recomputed!');
+    }
+
+    public function createSupply()
+    {
+        $districts = District::orderBy('name')->get();
+        $products = Product::orderBy('name')->get();
+        $businesses = Business::orderBy('name')->get();
+
+        return view('create_supply', compact('districts', 'products', 'businesses'));
+    }
+
+    public function storeSupply(Request $request, GapCalculationService $gapService, OpportunityScoringService $scoreService)
+    {
+        $validated = $request->validate([
+            'district_id' => 'required|uuid|exists:districts,id',
+            'product_id' => 'required|uuid|exists:products,id',
+            'business_id' => 'nullable|uuid|exists:businesses,id',
+            'installed_capacity' => 'required|numeric|min:0',
+            'actual_production' => 'required|numeric|min:0',
+            'period' => 'required|string',
+        ]);
+
+        LocalProduction::updateOrCreate(
+            [
+                'district_id' => $validated['district_id'],
+                'product_id' => $validated['product_id'],
+                'business_id' => $validated['business_id'] ?? null,
+                'period' => $validated['period'],
+            ],
+            [
+                'installed_capacity' => $validated['installed_capacity'],
+                'actual_production' => $validated['actual_production'],
+            ]
+        );
+
+        // Recompute the deficit & scoring dynamically
+        $gap = $gapService->calculateForProductAndDistrict(
+            $validated['district_id'],
+            $validated['product_id'],
+            $validated['period']
+        );
+
+        if ($gap) {
+            $scoreService->computeScore($gap);
+        }
+
+        // Cache clear taaki updated data instantly dashboard par show ho
+        Cache::forget('bmgf_dashboard_payload');
+
+        return redirect()->route('dashboard')->with('success', 'Local Production Capacity recorded & Deficit updated!');
     }
 
     public function compare(Request $request)
