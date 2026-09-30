@@ -17,3 +17,4 @@ Route::post('/supply/store', [DashboardController::class, 'storeSupply'])->name(
 
 // District Comparison
 Route::get('/compare', [DashboardController::class, 'compare'])->name('compare');
+Route::get('/spatial', [DashboardController::class, 'spatial'])->name('spatial');

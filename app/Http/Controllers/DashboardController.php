@@ -192,4 +192,12 @@ class DashboardController extends Controller
 
         return view('compare', compact('districts', 'districtA', 'districtB'));
     }
+    public function spatial()
+    {
+        $totalDistricts = District::count();
+        $totalBusinesses = Business::count();
+        $totalGaps = ManufacturingGap::where('status', 'published')->count();
+
+        return view('spatial', compact('totalDistricts', 'totalBusinesses', 'totalGaps'));
+    }
 }
