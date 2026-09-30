@@ -17,4 +17,9 @@ class Business extends Model
     {
         return $this->belongsTo(District::class);
     }
+
+    public function user()
+    {
+        return $this->belongsTo(User::class);
+    }
 }

@@ -12,6 +12,7 @@ use App\Services\GapCalculationService;
 use App\Services\OpportunityScoringService;
 use Illuminate\Http\Request;
 use Barryvdh\DomPDF\Facade\Pdf;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cache;
 
 class DashboardController extends Controller
@@ -142,6 +143,7 @@ class DashboardController extends Controller
     public function businesses(Request $request)
     {
         $businesses = Business::with('district')
+            ->where('verification_status', 'verified')
             ->when($request->filled('search'), function ($query) use ($request) {
                 $search = $request->string('search')->toString();
                 $query->where(function ($businessQuery) use ($search) {
@@ -166,6 +168,14 @@ class DashboardController extends Controller
 
     public function showBusiness(Business $business)
     {
+        $viewer = Auth::user();
+        abort_unless(
+            $business->verification_status === 'verified'
+                || $business->user_id === $viewer?->id
+                || $viewer?->role === 'admin',
+            404
+        );
+
         $business->load('district');
 
         return view('business_detail', compact('business'));
@@ -192,6 +202,7 @@ class DashboardController extends Controller
         ]);
 
         $validated['verification_status'] = 'pending';
+        $validated['user_id'] = $request->user()->id;
         Business::create($validated);
         Cache::forget('bmgf_dashboard_payload');
 

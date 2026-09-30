@@ -149,6 +149,23 @@ php artisan serve
 ```
 Visit **`http://127.0.0.1:8000`** in your browser.
 
+### 6. Configure Private Access
+The application is private by default. The dashboard, directory, MSME profiles, demand, supply, and comparison tools require authentication. New accounts can only be created through administrator-generated invitations.
+
+Create the first administrator directly during initial setup:
+```bash
+php artisan tinker
+```
+```php
+App\Models\User::create([
+  'name' => 'Platform Administrator',
+  'email' => 'your-private-admin-email@example.com',
+  'password' => Illuminate\Support\Facades\Hash::make('replace-with-a-strong-password'),
+  'role' => 'admin',
+]);
+```
+Sign in at **`/login`**, then create private seven-day invitation links from **`/admin/invitations`**. Administrators can review pending submissions at **`/admin/businesses`**. Only verified MSME profiles are shown to authenticated users.
+
 ---
 
 ## 🗺️ Application Routes

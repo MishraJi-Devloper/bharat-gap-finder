@@ -102,7 +102,20 @@
         <div class="collapse navbar-collapse justify-content-end mt-3 mt-lg-0" id="mainNavigation">
             <div class="d-flex flex-column flex-lg-row align-items-stretch align-items-lg-center gap-2">
                 <a href="{{ route('businesses') }}" class="btn btn-sm btn-outline-light fw-semibold">MSME Directory</a>
-                <a href="{{ route('businesses.create') }}" class="btn btn-sm btn-outline-info fw-semibold">Register MSME</a>
+                @auth
+                    <a href="{{ route('businesses.create') }}" class="btn btn-sm btn-outline-info fw-semibold">Register MSME</a>
+                    @if(auth()->user()->isAdmin())
+                        <a href="{{ route('admin.businesses') }}" class="btn btn-sm btn-warning fw-semibold">Review MSMEs</a>
+                        <a href="{{ route('admin.invitations') }}" class="btn btn-sm btn-outline-warning fw-semibold">Invite users</a>
+                    @endif
+                    <form method="POST" action="{{ route('logout') }}" class="d-flex">
+                        @csrf
+                        <button type="submit" class="btn btn-sm btn-outline-light fw-semibold">Sign out</button>
+                    </form>
+                @else
+                    <a href="{{ route('login') }}" class="btn btn-sm btn-outline-light fw-semibold">Sign in</a>
+                    <a href="{{ route('register') }}" class="btn btn-sm btn-success fw-bold">Create account</a>
+                @endauth
                 <a href="{{ route('compare') }}" class="btn btn-sm btn-outline-light fw-semibold">Compare Districts</a>
                 <a href="{{ route('supply.create') }}" class="btn btn-sm btn-outline-info fw-semibold">+ Log Supply</a>
                 <a href="{{ route('demand.create') }}" class="btn btn-sm btn-success fw-bold">+ Ingest Demand</a>
