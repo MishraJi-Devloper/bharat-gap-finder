@@ -10,6 +10,8 @@ Route::middleware('auth')->group(function () {
 Route::get('/', [DashboardController::class, 'index'])->name('dashboard');
 Route::get('/opportunity/{id}', [DashboardController::class, 'show'])->name('opportunity.show');
 Route::get('/opportunity/{id}/pdf', [DashboardController::class, 'exportPdf'])->name('opportunity.pdf');
+Route::get('/project/report', [DashboardController::class, 'projectReport'])->name('project.report');
+Route::get('/project/technical-report', [DashboardController::class, 'technicalReport'])->name('project.technical-report');
 
 // Demand Ingestion
 Route::get('/demand/create', [DashboardController::class, 'createDemand'])->name('demand.create');

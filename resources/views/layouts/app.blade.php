@@ -104,6 +104,8 @@
                 <a href="{{ route('businesses') }}" class="btn btn-sm btn-outline-light fw-semibold">MSME Directory</a>
                 @auth
                     <a href="{{ route('businesses.create') }}" class="btn btn-sm btn-outline-info fw-semibold">Register MSME</a>
+                    <a href="{{ route('project.report') }}" class="btn btn-sm btn-outline-light fw-semibold">Project report</a>
+                    <a href="{{ route('project.technical-report') }}" class="btn btn-sm btn-outline-light fw-semibold">Technical report</a>
                     @if(auth()->user()->isAdmin())
                         <a href="{{ route('admin.businesses') }}" class="btn btn-sm btn-warning fw-semibold">Review MSMEs</a>
                         <a href="{{ route('admin.invitations') }}" class="btn btn-sm btn-outline-warning fw-semibold">Invite users</a>

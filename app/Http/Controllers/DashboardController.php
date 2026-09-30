@@ -82,6 +82,20 @@ class DashboardController extends Controller
         return $pdf->download("Opportunity_Brief_{$gap->product->name}.pdf");
     }
 
+        public function projectReport()
+        {
+            return Pdf::loadView('pdf.project_report')
+                ->setPaper('a4')
+                ->download('Bharat_Manufacturing_Gap_Finder_Project_Report.pdf');
+        }
+
+        public function technicalReport()
+        {
+            return Pdf::loadView('pdf.technical_report')
+                ->setPaper('a4')
+                ->download('Bharat_Manufacturing_Gap_Finder_Technical_Report.pdf');
+        }
+
     public function createDemand()
     {
         $districts = District::orderBy('name')->get();
