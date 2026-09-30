@@ -139,6 +139,65 @@ class DashboardController extends Controller
         return view('create_supply', compact('districts', 'products', 'businesses'));
     }
 
+    public function businesses(Request $request)
+    {
+        $businesses = Business::with('district')
+            ->when($request->filled('search'), function ($query) use ($request) {
+                $search = $request->string('search')->toString();
+                $query->where(function ($businessQuery) use ($search) {
+                    $businessQuery->where('name', 'ilike', "%{$search}%")
+                        ->orWhere('locality', 'ilike', "%{$search}%")
+                        ->orWhere('district_name', 'ilike', "%{$search}%")
+                        ->orWhere('state', 'ilike', "%{$search}%")
+                        ->orWhere('industry_category', 'ilike', "%{$search}%");
+                });
+            })
+            ->latest()
+            ->paginate(12)
+            ->withQueryString();
+
+        return view('businesses', compact('businesses'));
+    }
+
+    public function createBusiness()
+    {
+        return view('create_business');
+    }
+
+    public function showBusiness(Business $business)
+    {
+        $business->load('district');
+
+        return view('business_detail', compact('business'));
+    }
+
+    public function storeBusiness(Request $request)
+    {
+        $validated = $request->validate([
+            'district_id' => 'nullable|uuid|exists:districts,id',
+            'district_name' => 'required|string|max:255',
+            'state' => 'required|string|max:255',
+            'name' => 'required|string|max:255',
+            'locality' => 'required|string|max:255',
+            'industry_category' => 'required|string|max:255',
+            'registration_number' => 'nullable|string|max:100',
+            'contact_name' => 'required|string|max:255',
+            'phone' => ['required', 'string', 'max:20', 'regex:/^\+?[0-9][0-9\s\-()]{7,19}$/'],
+            'email' => 'nullable|email|max:255',
+            'description' => 'nullable|string|max:1000',
+            'latitude' => 'nullable|numeric|between:-90,90',
+            'longitude' => 'nullable|numeric|between:-180,180',
+        ], [
+            'phone.regex' => 'Enter a valid phone number using digits, spaces, +, hyphens, or parentheses.',
+        ]);
+
+        $validated['verification_status'] = 'pending';
+        Business::create($validated);
+        Cache::forget('bmgf_dashboard_payload');
+
+        return redirect()->route('businesses')->with('success', 'MSME profile submitted for directory review.');
+    }
+
     public function storeSupply(Request $request, GapCalculationService $gapService, OpportunityScoringService $scoreService)
     {
         $validated = $request->validate([
@@ -160,6 +219,7 @@ class DashboardController extends Controller
             [
                 'installed_capacity' => $validated['installed_capacity'],
                 'actual_production' => $validated['actual_production'],
+                'quantity' => $validated['actual_production'],
             ]
         );
 
@@ -191,13 +251,5 @@ class DashboardController extends Controller
         $districtB = District::with(['businesses', 'manufacturingGaps.product'])->find($districtB_id);
 
         return view('compare', compact('districts', 'districtA', 'districtB'));
-    }
-    public function spatial()
-    {
-        $totalDistricts = District::count();
-        $totalBusinesses = Business::count();
-        $totalGaps = ManufacturingGap::where('status', 'published')->count();
-
-        return view('spatial', compact('totalDistricts', 'totalBusinesses', 'totalGaps'));
     }
 }

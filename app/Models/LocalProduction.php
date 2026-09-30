@@ -10,6 +10,8 @@ class LocalProduction extends Model
 {
     use HasFactory, HasUuids;
 
+    protected $table = 'production_capacity';
+
     protected $fillable = [
         'district_id',
         'product_id',

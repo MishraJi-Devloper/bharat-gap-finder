@@ -15,6 +15,11 @@ Route::post('/demand/store', [DashboardController::class, 'storeDemand'])->name(
 Route::get('/supply/create', [DashboardController::class, 'createSupply'])->name('supply.create');
 Route::post('/supply/store', [DashboardController::class, 'storeSupply'])->name('supply.store');
 
+// MSME Registry
+Route::get('/businesses', [DashboardController::class, 'businesses'])->name('businesses');
+Route::get('/businesses/create', [DashboardController::class, 'createBusiness'])->name('businesses.create');
+Route::post('/businesses', [DashboardController::class, 'storeBusiness'])->name('businesses.store');
+Route::get('/businesses/{business}', [DashboardController::class, 'showBusiness'])->name('businesses.show');
+
 // District Comparison
 Route::get('/compare', [DashboardController::class, 'compare'])->name('compare');
-Route::get('/spatial', [DashboardController::class, 'spatial'])->name('spatial');

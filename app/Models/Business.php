@@ -12,4 +12,9 @@ class Business extends Model
     protected $casts = [
         'machinery_specs' => 'array',
     ];
+
+    public function district()
+    {
+        return $this->belongsTo(District::class);
+    }
 }
