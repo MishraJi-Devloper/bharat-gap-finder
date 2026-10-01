@@ -32,4 +32,4 @@ RUN mkdir -p storage/framework/cache storage/framework/sessions storage/framewor
     && chmod -R ug+rwx storage bootstrap/cache
 
 EXPOSE 80
-CMD ["sh", "-c", "php artisan migrate --force && php artisan db:seed --class=Database\\Seeders\\ProductionReferenceSeeder --force && php artisan config:cache && php artisan route:cache && php artisan view:cache && apache2-foreground"]
+CMD ["sh", "-c", "php artisan migrate --force && php artisan db:seed --class='Database\\Seeders\\ProductionReferenceSeeder' --force && php artisan config:cache && php artisan route:cache && php artisan view:cache && apache2-foreground"]
