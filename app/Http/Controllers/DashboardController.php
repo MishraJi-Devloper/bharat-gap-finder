@@ -107,17 +107,20 @@ class DashboardController extends Controller
     public function storeDemand(Request $request, GapCalculationService $gapService, OpportunityScoringService $scoreService)
     {
         $validated = $request->validate([
-            'district_id' => 'required|uuid|exists:districts,id',
+            'state' => 'required|string|max:255',
+            'district_name' => 'required|string|max:255',
             'product_id' => 'required|uuid|exists:products,id',
             'quantity' => 'required|numeric|min:1',
             'period' => 'required|string',
             'source' => 'nullable|string|max:255',
         ]);
 
+        $district = $this->resolveDistrict($validated['district_name'], $validated['state']);
+
         // Market demand record ya update karein
         MarketDemand::updateOrCreate(
             [
-                'district_id' => $validated['district_id'],
+                'district_id' => $district->id,
                 'product_id' => $validated['product_id'],
                 'period' => $validated['period'],
             ],
@@ -130,7 +133,7 @@ class DashboardController extends Controller
 
         // Instant automatic gap identification & scoring computation
         $gap = $gapService->calculateForProductAndDistrict(
-            $validated['district_id'],
+            $district->id,
             $validated['product_id'],
             $validated['period']
         );
@@ -226,7 +229,8 @@ class DashboardController extends Controller
     public function storeSupply(Request $request, GapCalculationService $gapService, OpportunityScoringService $scoreService)
     {
         $validated = $request->validate([
-            'district_id' => 'required|uuid|exists:districts,id',
+            'state' => 'required|string|max:255',
+            'district_name' => 'required|string|max:255',
             'product_id' => 'required|uuid|exists:products,id',
             'business_id' => 'nullable|uuid|exists:businesses,id',
             'installed_capacity' => 'required|numeric|min:0',
@@ -234,9 +238,11 @@ class DashboardController extends Controller
             'period' => 'required|string',
         ]);
 
+        $district = $this->resolveDistrict($validated['district_name'], $validated['state']);
+
         LocalProduction::updateOrCreate(
             [
-                'district_id' => $validated['district_id'],
+                'district_id' => $district->id,
                 'product_id' => $validated['product_id'],
                 'business_id' => $validated['business_id'] ?? null,
                 'period' => $validated['period'],
@@ -250,7 +256,7 @@ class DashboardController extends Controller
 
         // Recompute the deficit & scoring dynamically
         $gap = $gapService->calculateForProductAndDistrict(
-            $validated['district_id'],
+            $district->id,
             $validated['product_id'],
             $validated['period']
         );
@@ -276,5 +282,13 @@ class DashboardController extends Controller
         $districtB = District::with(['businesses', 'manufacturingGaps.product'])->find($districtB_id);
 
         return view('compare', compact('districts', 'districtA', 'districtB'));
+    }
+
+    private function resolveDistrict(string $name, string $state): District
+    {
+        return District::firstOrCreate(
+            ['name' => trim($name), 'state' => trim($state)],
+            ['latitude' => null, 'longitude' => null]
+        );
     }
 }

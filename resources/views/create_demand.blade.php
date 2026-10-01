@@ -12,18 +12,17 @@
             <form action="{{ route('demand.store') }}" method="POST">
                 @csrf
 
-                <div class="mb-3">
-                    <label class="form-label fw-semibold">Target District</label>
-                    <select name="district_id" class="form-select @error('district_id') is-invalid @enderror" required {{ $districts->isEmpty() ? 'disabled' : '' }}>
-                        <option value="">Select District</option>
-                        @foreach($districts as $district)
-                            <option value="{{ $district->id }}">{{ $district->name }} ({{ $district->state }})</option>
-                        @endforeach
-                    </select>
-                    @error('district_id') <div class="invalid-feedback">{{ $message }}</div> @enderror
-                    @if($districts->isEmpty())
-                        <div class="form-text text-warning">No districts are configured yet. Ask an administrator to load the reference data.</div>
-                    @endif
+                <div class="row g-3 mb-3">
+                    <div class="col-md-6">
+                        <label for="state" class="form-label fw-semibold">State / Union Territory</label>
+                        <input id="state" name="state" value="{{ old('state') }}" class="form-control @error('state') is-invalid @enderror" placeholder="e.g. Punjab" required>
+                        @error('state') <div class="invalid-feedback">{{ $message }}</div> @enderror
+                    </div>
+                    <div class="col-md-6">
+                        <label for="district_name" class="form-label fw-semibold">District</label>
+                        <input id="district_name" name="district_name" value="{{ old('district_name') }}" class="form-control @error('district_name') is-invalid @enderror" placeholder="e.g. Ludhiana" required>
+                        @error('district_name') <div class="invalid-feedback">{{ $message }}</div> @enderror
+                    </div>
                 </div>
 
                 <div class="mb-3">
