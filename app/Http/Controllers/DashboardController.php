@@ -27,7 +27,9 @@ class DashboardController extends Controller
                 ->get();
 
             // 2. Single trip query with counts (eliminates N+1 loop roundtrips)
-            $districts = District::withCount(['businesses', 'manufacturingGaps'])->get();
+            $districts = District::with(['manufacturingGaps.product'])
+                ->withCount(['businesses', 'manufacturingGaps'])
+                ->get();
 
             // 3. In-memory calculations (0 extra DB queries)
             $totalDistricts = $districts->count();
@@ -43,6 +45,12 @@ class DashboardController extends Controller
                     'lng' => (float) $district->longitude,
                     'businesses_count' => $district->businesses_count,
                     'gaps_count' => $district->manufacturing_gaps_count,
+                    'gap_products' => $district->manufacturingGaps
+                        ->where('status', 'published')
+                        ->map(fn ($gap) => $gap->product?->name)
+                        ->filter()
+                        ->values()
+                        ->all(),
                 ];
             });
 

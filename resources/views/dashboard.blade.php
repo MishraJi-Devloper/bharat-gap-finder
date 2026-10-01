@@ -121,6 +121,11 @@
         const districtsData = '{!! addslashes($mapDistrictsJson ?? "[]") !!}';
         const districts = JSON.parse(districtsData);
         const markerGroup = [];
+        const escapeHtml = function (value) {
+            return String(value).replace(/[&<>'"]/g, function (character) {
+                return ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' })[character];
+            });
+        };
 
         districts.forEach(function (d) {
             if (d.lat && d.lng) {
@@ -133,10 +138,15 @@
                     fillOpacity: 0.85
                 }).addTo(map);
 
+                const gapProducts = d.gap_products?.length
+                    ? '<strong>Products with gaps:</strong><br>' + d.gap_products.map(escapeHtml).join('<br>') + '<br>'
+                    : '';
+
                 marker.bindPopup(
                     '<div style="font-family: sans-serif; font-size: 13px; line-height: 1.4;">' +
-                    '<strong style="font-size: 14px;">' + d.name + '</strong> (' + d.state + ')<br>' +
+                    '<strong style="font-size: 14px;">' + escapeHtml(d.name) + '</strong> (' + escapeHtml(d.state) + ')<br>' +
                     '<hr style="margin: 6px 0;">' +
+                    gapProducts +
                     '<span style="color: #dc2626; font-weight: 700;">Active Deficits: ' + d.gaps_count + '</span><br>' +
                     '<span style="color: #475569;">Verified MSMEs: ' + d.businesses_count + '</span>' +
                     '</div>'
