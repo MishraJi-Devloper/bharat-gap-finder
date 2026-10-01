@@ -109,19 +109,22 @@ class DashboardController extends Controller
         $validated = $request->validate([
             'state' => 'required|string|max:255',
             'district_name' => 'required|string|max:255',
-            'product_id' => 'required|uuid|exists:products,id',
+            'product_name' => 'required|string|max:255',
+            'product_category' => 'required|string|max:255',
+            'product_unit' => 'required|string|max:100',
             'quantity' => 'required|numeric|min:1',
             'period' => 'required|string',
             'source' => 'nullable|string|max:255',
         ]);
 
         $district = $this->resolveDistrict($validated['district_name'], $validated['state']);
+        $product = $this->resolveProduct($validated['product_name'], $validated['product_category'], $validated['product_unit']);
 
         // Market demand record ya update karein
         MarketDemand::updateOrCreate(
             [
                 'district_id' => $district->id,
-                'product_id' => $validated['product_id'],
+                'product_id' => $product->id,
                 'period' => $validated['period'],
             ],
             [
@@ -134,7 +137,7 @@ class DashboardController extends Controller
         // Instant automatic gap identification & scoring computation
         $gap = $gapService->calculateForProductAndDistrict(
             $district->id,
-            $validated['product_id'],
+            $product->id,
             $validated['period']
         );
 
@@ -205,7 +208,6 @@ class DashboardController extends Controller
             'district_name' => 'required|string|max:255',
             'state' => 'required|string|max:255',
             'name' => 'required|string|max:255',
-            'locality' => 'required|string|max:255',
             'industry_category' => 'required|string|max:255',
             'registration_number' => 'nullable|string|max:100',
             'contact_name' => 'required|string|max:255',
@@ -231,7 +233,9 @@ class DashboardController extends Controller
         $validated = $request->validate([
             'state' => 'required|string|max:255',
             'district_name' => 'required|string|max:255',
-            'product_id' => 'required|uuid|exists:products,id',
+            'product_name' => 'required|string|max:255',
+            'product_category' => 'required|string|max:255',
+            'product_unit' => 'required|string|max:100',
             'business_id' => 'nullable|uuid|exists:businesses,id',
             'installed_capacity' => 'required|numeric|min:0',
             'actual_production' => 'required|numeric|min:0',
@@ -239,11 +243,12 @@ class DashboardController extends Controller
         ]);
 
         $district = $this->resolveDistrict($validated['district_name'], $validated['state']);
+    $product = $this->resolveProduct($validated['product_name'], $validated['product_category'], $validated['product_unit']);
 
         LocalProduction::updateOrCreate(
             [
                 'district_id' => $district->id,
-                'product_id' => $validated['product_id'],
+        'product_id' => $product->id,
                 'business_id' => $validated['business_id'] ?? null,
                 'period' => $validated['period'],
             ],
@@ -257,7 +262,7 @@ class DashboardController extends Controller
         // Recompute the deficit & scoring dynamically
         $gap = $gapService->calculateForProductAndDistrict(
             $district->id,
-            $validated['product_id'],
+            $product->id,
             $validated['period']
         );
 
@@ -289,6 +294,14 @@ class DashboardController extends Controller
         return District::firstOrCreate(
             ['name' => trim($name), 'state' => trim($state)],
             ['latitude' => null, 'longitude' => null]
+        );
+    }
+
+    private function resolveProduct(string $name, string $category, string $unit): Product
+    {
+        return Product::firstOrCreate(
+            ['name' => trim($name)],
+            ['category' => trim($category), 'unit' => trim($unit)]
         );
     }
 }
