@@ -147,7 +147,7 @@
         });
 
         if (markerGroup.length > 0) {
-            map.fitBounds(markerGroup, { padding: [50, 50] });
+            map.fitBounds(markerGroup, { padding: [50, 50], maxZoom: 10 });
         }
 
         const searchInput = document.getElementById('tableSearch');
