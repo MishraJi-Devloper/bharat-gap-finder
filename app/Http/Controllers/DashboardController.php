@@ -115,9 +115,11 @@ class DashboardController extends Controller
             'quantity' => 'required|numeric|min:1',
             'period' => 'required|string',
             'source' => 'nullable|string|max:255',
+            'latitude' => 'nullable|numeric|between:-90,90',
+            'longitude' => 'nullable|numeric|between:-180,180',
         ]);
 
-        $district = $this->resolveDistrict($validated['district_name'], $validated['state']);
+        $district = $this->resolveDistrict($validated['district_name'], $validated['state'], $validated['latitude'] ?? null, $validated['longitude'] ?? null);
         $product = $this->resolveProduct($validated['product_name'], $validated['product_category'], $validated['product_unit']);
 
         // Market demand record ya update karein
@@ -240,9 +242,11 @@ class DashboardController extends Controller
             'installed_capacity' => 'required|numeric|min:0',
             'actual_production' => 'required|numeric|min:0',
             'period' => 'required|string',
+            'latitude' => 'nullable|numeric|between:-90,90',
+            'longitude' => 'nullable|numeric|between:-180,180',
         ]);
 
-        $district = $this->resolveDistrict($validated['district_name'], $validated['state']);
+        $district = $this->resolveDistrict($validated['district_name'], $validated['state'], $validated['latitude'] ?? null, $validated['longitude'] ?? null);
     $product = $this->resolveProduct($validated['product_name'], $validated['product_category'], $validated['product_unit']);
 
         LocalProduction::updateOrCreate(
@@ -289,12 +293,18 @@ class DashboardController extends Controller
         return view('compare', compact('districts', 'districtA', 'districtB'));
     }
 
-    private function resolveDistrict(string $name, string $state): District
+    private function resolveDistrict(string $name, string $state, ?float $latitude = null, ?float $longitude = null): District
     {
-        return District::firstOrCreate(
+        $district = District::firstOrCreate(
             ['name' => trim($name), 'state' => trim($state)],
-            ['latitude' => null, 'longitude' => null]
+            ['latitude' => $latitude, 'longitude' => $longitude]
         );
+
+        if ($latitude !== null && $longitude !== null && ($district->latitude === null || $district->longitude === null)) {
+            $district->update(['latitude' => $latitude, 'longitude' => $longitude]);
+        }
+
+        return $district;
     }
 
     private function resolveProduct(string $name, string $category, string $unit): Product

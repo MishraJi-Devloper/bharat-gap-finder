@@ -62,6 +62,21 @@
                     <input type="text" name="source" class="form-control" placeholder="e.g. DIC Industrial Survey / MSME Cluster RFP">
                 </div>
 
+                <div class="border rounded p-3 mb-4 bg-light">
+                    <div class="d-flex justify-content-between align-items-center gap-2 mb-2">
+                        <div>
+                            <label class="form-label fw-semibold mb-1">Precise district location</label>
+                            <div class="form-text mt-0">Add coordinates so this district appears on the dashboard map.</div>
+                        </div>
+                        <button type="button" class="btn btn-sm btn-outline-success use-location">Use my location</button>
+                    </div>
+                    <div class="row g-2">
+                        <div class="col-md-6"><input name="latitude" class="form-control" inputmode="decimal" placeholder="Latitude e.g. 30.9010"></div>
+                        <div class="col-md-6"><input name="longitude" class="form-control" inputmode="decimal" placeholder="Longitude e.g. 75.8573"></div>
+                    </div>
+                    <div class="location-status small text-muted mt-2" role="status"></div>
+                </div>
+
                 <div class="d-grid">
                     <button type="submit" class="btn btn-success fw-bold py-2">
                         Calculate Gap & Update Intelligence Pipeline
@@ -71,4 +86,16 @@
         </div>
     </div>
 </div>
+<script>
+    document.querySelector('.use-location')?.addEventListener('click', function () {
+        const status = document.querySelector('.location-status');
+        if (!navigator.geolocation) { status.textContent = 'Location is not supported by this browser.'; return; }
+        status.textContent = 'Requesting your location...';
+        navigator.geolocation.getCurrentPosition(function (position) {
+            document.querySelector('[name="latitude"]').value = position.coords.latitude.toFixed(7);
+            document.querySelector('[name="longitude"]').value = position.coords.longitude.toFixed(7);
+            status.textContent = 'Location added. The dashboard can now plot this district.';
+        }, function () { status.textContent = 'Location unavailable. Enter coordinates manually.'; });
+    });
+</script>
 @endsection
