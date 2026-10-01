@@ -111,12 +111,14 @@ class DashboardController extends Controller
             'district_name' => 'required|string|max:255',
             'product_name' => 'required|string|max:255',
             'product_category' => 'required|string|max:255',
-            'product_unit' => 'required|string|max:100',
+            'product_unit' => ['required', 'string', 'max:100', 'not_regex:/^\d+(\.\d+)?$/'],
             'quantity' => 'required|numeric|min:1',
             'period' => 'required|string',
             'source' => 'nullable|string|max:255',
             'latitude' => 'nullable|numeric|between:-90,90',
             'longitude' => 'nullable|numeric|between:-180,180',
+        ], [
+            'product_unit.not_regex' => 'Enter a unit such as Panels, Units, Tons, or Kg. Put numeric values in the quantity field.',
         ]);
 
         $district = $this->resolveDistrict($validated['district_name'], $validated['state'], $validated['latitude'] ?? null, $validated['longitude'] ?? null);
@@ -237,22 +239,24 @@ class DashboardController extends Controller
             'district_name' => 'required|string|max:255',
             'product_name' => 'required|string|max:255',
             'product_category' => 'required|string|max:255',
-            'product_unit' => 'required|string|max:100',
+            'product_unit' => ['required', 'string', 'max:100', 'not_regex:/^\d+(\.\d+)?$/'],
             'business_id' => 'nullable|uuid|exists:businesses,id',
             'installed_capacity' => 'required|numeric|min:0',
             'actual_production' => 'required|numeric|min:0',
             'period' => 'required|string',
             'latitude' => 'nullable|numeric|between:-90,90',
             'longitude' => 'nullable|numeric|between:-180,180',
+        ], [
+            'product_unit.not_regex' => 'Enter a unit such as Panels, Units, Tons, or Kg. Put numeric values in the quantity field.',
         ]);
 
         $district = $this->resolveDistrict($validated['district_name'], $validated['state'], $validated['latitude'] ?? null, $validated['longitude'] ?? null);
-    $product = $this->resolveProduct($validated['product_name'], $validated['product_category'], $validated['product_unit']);
+        $product = $this->resolveProduct($validated['product_name'], $validated['product_category'], $validated['product_unit']);
 
         LocalProduction::updateOrCreate(
             [
                 'district_id' => $district->id,
-        'product_id' => $product->id,
+            'product_id' => $product->id,
                 'business_id' => $validated['business_id'] ?? null,
                 'period' => $validated['period'],
             ],
